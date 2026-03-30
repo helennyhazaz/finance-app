@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>הוצאות | הלני</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f13; color: #f0f0f0; min-height: 100vh; }
+
+  /* Header */
+  header { background: #1a1a24; padding: 20px 24px 16px; border-bottom: 1px solid #2a2a3a; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 1.3rem; font-weight: 700; color: #fff; }
+  header .subtitle { font-size: 0.8rem; color: #888; margin-top: 2px; }
+
+  /* Nav */
+  nav { display: flex; gap: 8px; padding: 16px 24px 0; overflow-x: auto; }
+  nav button { background: #1e1e2e; border: 1px solid #2a2a3a; color: #aaa; padding: 8px 18px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; transition: all .2s; }
+  nav button.active { background: #6c63ff; border-color: #6c63ff; color: #fff; }
+
+  /* Main */
+  main { padding: 20px 24px; max-width: 640px; margin: 0 auto; }
+
+  /* Cards row */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .card { background: #1a1a24; border-radius: 16px; padding: 16px; border: 1px solid #2a2a3a; }
+  .card .label { font-size: 0.72rem; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+  .card .value { font-size: 1.5rem; font-weight: 700; color: #fff; }
+  .card .value.red { color: #ff6b6b; }
+  .card .value.green { color: #51cf66; }
+  .card-full { grid-column: 1/-1; }
+
+  /* Add form */
+  .add-form { background: #1a1a24; border-radius: 20px; padding: 20px; border: 1px solid #2a2a3a; margin-bottom: 24px; }
+  .add-form h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  input, select, textarea { background: #0f0f13; border: 1px solid #2a2a3a; color: #f0f0f0; padding: 12px 14px; border-radius: 12px; font-size: 0.95rem; width: 100%; outline: none; transition: border .2s; font-family: inherit; }
+  input:focus, select:focus { border-color: #6c63ff; }
+  select option { background: #1a1a24; }
+  .btn { background: #6c63ff; color: #fff; border: none; padding: 13px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; transition: background .2s; margin-top: 6px; }
+  .btn:hover { background: #5a52e0; }
+  .btn.outline { background: transparent; border: 1px solid #6c63ff; color: #6c63ff; }
+  .btn.red { background: #c92a2a; }
+  .btn.green { background: #2f9e44; }
+
+  /* Transactions */
+  .section-title { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
+  .tx-list { display: flex; flex-direction: column; gap: 8px; }
+  .tx { background: #1a1a24; border-radius: 14px; padding: 14px 16px; border: 1px solid #2a2a3a; display: flex; align-items: center; gap: 12px; }
+  .tx-icon { font-size: 1.5rem; width: 42px; height: 42px; background: #0f0f13; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .tx-info { flex: 1; min-width: 0; }
+  .tx-name { font-size: 0.95rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-meta { font-size: 0.75rem; color: #666; margin-top: 2px; }
+  .tx-amount { font-size: 1.05rem; font-weight: 700; color: #ff6b6b; white-space: nowrap; }
+  .tx-amount.income { color: #51cf66; }
+  .tx-del { background: none; border: none; color: #555; cursor: pointer; font-size: 1.1rem; padding: 4px; transition: color .2s; }
+  .tx-del:hover { color: #ff6b6b; }
+
+  /* Chart */
+  .chart-wrap { background: #1a1a24; border-radius: 20px; padding: 20px; border: 1px solid #2a2a3a; margin-bottom: 24px; }
+  .chart-wrap h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .bar-label { font-size: 0.82rem; color: #aaa; width: 90px; flex-shrink: 0; text-align: right; }
+  .bar-track { flex: 1; background: #0f0f13; border-radius: 6px; height: 10px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width .4s; }
+  .bar-val { font-size: 0.8rem; color: #aaa; width: 70px; text-align: left; flex-shrink: 0; }
+
+  /* Month picker */
+  .month-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .month-row button { background: #1e1e2e; border: 1px solid #2a2a3a; color: #aaa; width: 34px; height: 34px; border-radius: 10px; font-size: 1.1rem; cursor: pointer; }
+  .month-row span { flex: 1; text-align: center; font-weight: 600; color: #fff; }
+
+  /* Report */
+  .report-box { background: #1a1a24; border-radius: 20px; padding: 20px; border: 1px solid #2a2a3a; margin-bottom: 20px; }
+  .report-box pre { font-family: monospace; font-size: 0.82rem; color: #ccc; white-space: pre-wrap; line-height: 1.7; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 40px 20px; color: #555; }
+  .empty .emoji { font-size: 2.5rem; margin-bottom: 10px; }
+
+  /* Page visibility */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Badge */
+  .badge { display: inline-block; font-size: 0.7rem; background: #2a2a3a; color: #aaa; padding: 2px 8px; border-radius: 20px; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💳 ניהול הוצאות</h1>
+  <div class="subtitle" id="headerSub">טוען...</div>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('dashboard')">🏠 ראשי</button>
+  <button onclick="showPage('add')">➕ הוסף</button>
+  <button onclick="showPage('history')">📋 היסטוריה</button>
+  <button onclick="showPage('charts')">📊 גרפים</button>
+  <button onclick="showPage('report')">📧 דוח חודשי</button>
+</nav>
+
+<!-- DASHBOARD -->
+<main>
+<div class="page active" id="page-dashboard">
+  <br>
+  <div class="month-row">
+    <button onclick="changeMonth(-1)">‹</button>
+    <span id="monthLabel"></span>
+    <button onclick="changeMonth(1)">›</button>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">סה״כ הוצאות</div>
+      <div class="value red" id="totalExpense">₪0</div>
+    </div>
+    <div class="card">
+      <div class="label">סה״כ הכנסות</div>
+      <div class="value green" id="totalIncome">₪0</div>
+    </div>
+    <div class="card card-full">
+      <div class="label">יתרה</div>
+      <div class="value" id="balance">₪0</div>
+    </div>
+  </div>
+
+  <div class="section-title">עסקאות אחרונות</div>
+  <div class="tx-list" id="recentList"></div>
+</div>
+
+<!-- ADD -->
+<div class="page" id="page-add">
+  <br>
+  <div class="add-form">
+    <h3>➕ הוסף עסקה</h3>
+    <div class="form-row">
+      <div>
+        <input type="number" id="addAmount" placeholder="סכום (₪)" min="0" step="0.01">
+      </div>
+      <div>
+        <select id="addType">
+          <option value="expense">הוצאה</option>
+          <option value="income">הכנסה</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row single">
+      <select id="addCat">
+        <option value="🍔 אוכל">🍔 אוכל</option>
+        <option value="🚗 תחבורה">🚗 תחבורה</option>
+        <option value="🛒 קניות">🛒 קניות</option>
+        <option value="☕ קפה">☕ קפה</option>
+        <option value="🎬 בילויים">🎬 בילויים</option>
+        <option value="💊 בריאות">💊 בריאות</option>
+        <option value="📱 טכנולוגיה">📱 טכנולוגיה</option>
+        <option value="🏠 דיור">🏠 דיור</option>
+        <option value="✈️ טיולים">✈️ טיולים</option>
+        <option value="💰 משכורת">💰 משכורת</option>
+        <option value="📦 אחר">📦 אחר</option>
+      </select>
+    </div>
+    <div class="form-row single">
+      <input type="text" id="addNote" placeholder="הערה (אופציונלי)">
+    </div>
+    <div class="form-row single">
+      <input type="date" id="addDate">
+    </div>
+    <button class="btn" onclick="addTransaction()">💾 שמור עסקה</button>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="page" id="page-history">
+  <br>
+  <div class="month-row">
+    <button onclick="changeMonth(-1)">‹</button>
+    <span id="monthLabel2"></span>
+    <button onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="section-title">כל העסקאות</div>
+  <div class="tx-list" id="allList"></div>
+</div>
+
+<!-- CHARTS -->
+<div class="page" id="page-charts">
+  <br>
+  <div class="month-row">
+    <button onclick="changeMonth(-1)">‹</button>
+    <span id="monthLabel3"></span>
+    <button onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="chart-wrap">
+    <h3>📊 הוצאות לפי קטגוריה</h3>
+    <div id="chartBars"></div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div class="page" id="page-report">
+  <br>
+  <div class="report-box">
+    <h3 style="margin-bottom:12px;">📧 דוח חודשי</h3>
+    <pre id="reportText"></pre>
+  </div>
+  <button class="btn green" onclick="sendEmailReport()">📧 שלח במייל</button>
+  <br><br>
+  <button class="btn outline" onclick="copyReport()">📋 העתק דוח</button>
+  <br><br>
+  <div style="background:#1a1a24;border-radius:16px;padding:16px;border:1px solid #2a2a3a;margin-top:8px;">
+    <div class="label" style="margin-bottom:8px;">📮 כתובת מייל לדוח</div>
+    <input type="email" id="reportEmail" placeholder="your@email.com" style="margin-bottom:8px;">
+    <button class="btn" onclick="saveEmail()">שמור מייל</button>
+  </div>
+</div>
+</main>
+
+<script>
+// ─── Data ───────────────────────────────────────────────────────────────────
+let transactions = JSON.parse(localStorage.getItem('finance_txs') || '[]');
+let currentDate = new Date();
+let currentPage = 'dashboard';
+
+const COLORS = {
+  '🍔 אוכל':       '#ff6b6b',
+  '🚗 תחבורה':     '#ffd43b',
+  '🛒 קניות':      '#74c0fc',
+  '☕ קפה':        '#a9e34b',
+  '🎬 בילויים':    '#da77f2',
+  '💊 בריאות':     '#63e6be',
+  '📱 טכנולוגיה':  '#4dabf7',
+  '🏠 דיור':       '#ffa94d',
+  '✈️ טיולים':     '#38d9a9',
+  '💰 משכורת':     '#51cf66',
+  '📦 אחר':        '#868e96',
+};
+
+function save() { localStorage.setItem('finance_txs', JSON.stringify(transactions)); }
+
+// ─── URL scheme for Shortcut ─────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const hash = window.location.hash;
+  if (hash.startsWith('#add')) {
+    const p = new URLSearchParams(hash.slice(5));
+    const amount = parseFloat(p.get('amount'));
+    const cat = decodeURIComponent(p.get('cat') || '📦 אחר');
+    const note = decodeURIComponent(p.get('note') || '');
+    const type = p.get('type') || 'expense';
+    if (amount > 0) {
+      transactions.push({ id: Date.now(), amount, cat, note, type, date: new Date().toISOString().slice(0,10) });
+      save();
+      alert(`✅ נשמר!\n${type === 'expense' ? 'הוצאה' : 'הכנסה'}: ₪${amount}\n${cat}`);
+      window.location.hash = '';
+    }
+  }
+
+  // Set today's date in add form
+  document.getElementById('addDate').value = new Date().toISOString().slice(0,10);
+  // Load saved email
+  const em = localStorage.getItem('report_email');
+  if (em) document.getElementById('reportEmail').value = em;
+
+  render();
+});
+
+// ─── Month navigation ────────────────────────────────────────────────────────
+function changeMonth(d) {
+  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + d, 1);
+  render();
+}
+
+function monthStr(d) {
+  return d.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+}
+
+function txInMonth(tx) {
+  const d = new Date(tx.date);
+  return d.getFullYear() === currentDate.getFullYear() && d.getMonth() === currentDate.getMonth();
+}
+
+// ─── Pages ───────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('nav button')[['dashboard','add','history','charts','report'].indexOf(name)].classList.add('active');
+  currentPage = name;
+  render();
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function render() {
+  const ms = monthStr(currentDate);
+  ['monthLabel','monthLabel2','monthLabel3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = ms;
+  });
+  document.getElementById('headerSub').textContent = ms;
+
+  const monthTxs = transactions.filter(txInMonth);
+  const expenses = monthTxs.filter(t => t.type === 'expense');
+  const incomes  = monthTxs.filter(t => t.type === 'income');
+  const totalExp = expenses.reduce((s,t) => s + t.amount, 0);
+  const totalInc = incomes.reduce((s,t) => s + t.amount, 0);
+  const bal = totalInc - totalExp;
+
+  // Dashboard cards
+  document.getElementById('totalExpense').textContent = '₪' + totalExp.toLocaleString('he-IL', {minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('totalIncome').textContent  = '₪' + totalInc.toLocaleString('he-IL', {minimumFractionDigits:2,maximumFractionDigits:2});
+  const balEl = document.getElementById('balance');
+  balEl.textContent = (bal < 0 ? '-' : '') + '₪' + Math.abs(bal).toLocaleString('he-IL', {minimumFractionDigits:2,maximumFractionDigits:2});
+  balEl.className = 'value ' + (bal >= 0 ? 'green' : 'red');
+
+  // Recent list (last 5)
+  const recent = [...monthTxs].sort((a,b) => b.id - a.id).slice(0,5);
+  document.getElementById('recentList').innerHTML = renderTxList(recent);
+
+  // History
+  const all = [...monthTxs].sort((a,b) => b.id - a.id);
+  document.getElementById('allList').innerHTML = renderTxList(all, true);
+
+  // Charts
+  renderCharts(expenses);
+
+  // Report
+  renderReport(monthTxs, ms, totalExp, totalInc, bal);
+}
+
+function renderTxList(list, showDel = false) {
+  if (!list.length) return '<div class="empty"><div class="emoji">😶</div>אין עסקאות החודש</div>';
+  return list.map(tx => `
+    <div class="tx">
+      <div class="tx-icon">${tx.cat.split(' ')[0]}</div>
+      <div class="tx-info">
+        <div class="tx-name">${tx.cat.split(' ').slice(1).join(' ')}</div>
+        <div class="tx-meta">${tx.date}${tx.note ? ' · ' + tx.note : ''}</div>
+      </div>
+      <div class="tx-amount ${tx.type === 'income' ? 'income' : ''}">
+        ${tx.type === 'income' ? '+' : '-'}₪${tx.amount.toLocaleString('he-IL')}
+      </div>
+      ${showDel ? `<button class="tx-del" onclick="deleteTx(${tx.id})">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderCharts(expenses) {
+  const bycat = {};
+  expenses.forEach(t => { bycat[t.cat] = (bycat[t.cat] || 0) + t.amount; });
+  const total = Object.values(bycat).reduce((s,v) => s+v, 0) || 1;
+  const sorted = Object.entries(bycat).sort((a,b) => b[1]-a[1]);
+  if (!sorted.length) {
+    document.getElementById('chartBars').innerHTML = '<div class="empty"><div class="emoji">📊</div>אין נתונים</div>';
+    return;
+  }
+  document.getElementById('chartBars').innerHTML = sorted.map(([cat, val]) => `
+    <div class="bar-row">
+      <div class="bar-label">${cat}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(val/total*100).toFixed(1)}%;background:${COLORS[cat]||'#6c63ff'}"></div></div>
+      <div class="bar-val">₪${val.toLocaleString('he-IL')}</div>
+    </div>
+  `).join('');
+}
+
+function renderReport(txs, ms, totalExp, totalInc, bal) {
+  if (!txs.length) {
+    document.getElementById('reportText').textContent = 'אין עסקאות לחודש זה.';
+    return;
+  }
+  const lines = [];
+  lines.push(`דוח הוצאות — ${ms}`);
+  lines.push('═'.repeat(35));
+  lines.push('');
+
+  // By category
+  const bycat = {};
+  txs.filter(t=>t.type==='expense').forEach(t => { bycat[t.cat] = (bycat[t.cat]||0)+t.amount; });
+  if (Object.keys(bycat).length) {
+    lines.push('📊 הוצאות לפי קטגוריה:');
+    Object.entries(bycat).sort((a,b)=>b[1]-a[1]).forEach(([c,v]) => {
+      lines.push(`  ${c}: ₪${v.toLocaleString('he-IL')}`);
+    });
+    lines.push('');
+  }
+
+  lines.push('📋 כל העסקאות:');
+  txs.sort((a,b) => a.date.localeCompare(b.date)).forEach(t => {
+    const sign = t.type === 'income' ? '+' : '-';
+    lines.push(`  ${t.date}  ${sign}₪${t.amount}  ${t.cat}${t.note?' | '+t.note:''}`);
+  });
+  lines.push('');
+  lines.push('─'.repeat(35));
+  lines.push(`סה״כ הוצאות:  ₪${totalExp.toLocaleString('he-IL')}`);
+  lines.push(`סה״כ הכנסות:  ₪${totalInc.toLocaleString('he-IL')}`);
+  lines.push(`יתרה:          ₪${bal.toLocaleString('he-IL')}`);
+
+  document.getElementById('reportText').textContent = lines.join('\n');
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────────────
+function addTransaction() {
+  const amount = parseFloat(document.getElementById('addAmount').value);
+  const type   = document.getElementById('addType').value;
+  const cat    = document.getElementById('addCat').value;
+  const note   = document.getElementById('addNote').value.trim();
+  const date   = document.getElementById('addDate').value;
+  if (!amount || amount <= 0) { alert('נא להזין סכום'); return; }
+  if (!date) { alert('נא לבחור תאריך'); return; }
+  transactions.push({ id: Date.now(), amount, type, cat, note, date });
+  save();
+  document.getElementById('addAmount').value = '';
+  document.getElementById('addNote').value = '';
+  document.getElementById('addDate').value = new Date().toISOString().slice(0,10);
+  showPage('dashboard');
+}
+
+function deleteTx(id) {
+  if (!confirm('למחוק עסקה זו?')) return;
+  transactions = transactions.filter(t => t.id !== id);
+  save();
+  render();
+}
+
+function saveEmail() {
+  const em = document.getElementById('reportEmail').value.trim();
+  if (!em) return;
+  localStorage.setItem('report_email', em);
+  alert('✅ מייל נשמר!');
+}
+
+function sendEmailReport() {
+  const em = localStorage.getItem('report_email') || '';
+  const subject = encodeURIComponent('דוח הוצאות — ' + monthStr(currentDate));
+  const body = encodeURIComponent(document.getElementById('reportText').textContent);
+  window.location.href = `mailto:${em}?subject=${subject}&body=${body}`;
+}
+
+function copyReport() {
+  navigator.clipboard.writeText(document.getElementById('reportText').textContent)
+    .then(() => alert('✅ הועתק!'))
+    .catch(() => alert('לא ניתן להעתיק'));
+}
+</script>
+</body>
+</html>
