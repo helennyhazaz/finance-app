@@ -389,7 +389,15 @@ function render() {
   const incomes  = monthTxs.filter(t => t.type === 'income');
   const totalExp = expenses.reduce((s,t) => s + t.amount, 0);
   const totalInc = incomes.reduce((s,t)  => s + t.amount, 0);
-  const bal = totalInc - totalExp;
+
+  // חישוב יתרה מצטברת מכל החודשים הקודמים
+  const firstOfMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-01`;
+  const prevTxs = transactions.filter(t => t.date < firstOfMonth);
+  const prevInc = prevTxs.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
+  const prevExp = prevTxs.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
+  const carryover = prevInc - prevExp;
+
+  const bal = carryover + totalInc - totalExp;
 
   const fmt = v => '₪' + v.toLocaleString('he-IL', { minimumFractionDigits:2, maximumFractionDigits:2 });
   document.getElementById('c-exp').textContent = fmt(totalExp);
