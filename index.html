@@ -244,7 +244,7 @@ select option { background:#1a1a24; }
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy }
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ── PASTE YOUR FIREBASE CONFIG HERE ──────────────────────────────────────────
@@ -305,9 +305,10 @@ onAuthStateChanged(auth, async user => {
 // ── Firestore ─────────────────────────────────────────────────────────────────
 async function loadTx() {
   if (!uid) return;
-  const q = query(collection(db, 'transactions'), where('uid', '==', uid), orderBy('date', 'desc'));
+  const q = query(collection(db, 'transactions'), where('uid', '==', uid));
   const snap = await getDocs(q);
   transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  transactions.sort((a, b) => b.date.localeCompare(a.date));
 }
 
 window.addTx = async () => {
