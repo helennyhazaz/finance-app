@@ -159,12 +159,7 @@ select option { background:#1a1a24; }
       <br>
       <div class="form-card">
         <h3>➕ הוסף עסקה</h3>
-        <label id="receiptLabel" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1e1e2e;border:2px dashed #3a3a5a;border-radius:14px;padding:14px;cursor:pointer;margin-bottom:12px;color:#888;font-size:0.9rem;transition:border-color .2s;">
-          📷 העלה קבלה (מלא אוטומטית)
-          <input type="file" id="receiptInput" accept="image/*" style="display:none" onchange="scanReceipt(this)">
-        </label>
-        <div id="receiptStatus" style="text-align:center;font-size:0.82rem;color:#6c63ff;margin-bottom:8px;display:none;"></div>
-        <div class="row2">
+<div class="row2">
           <input type="number" id="fAmount" placeholder="סכום ₪" min="0" step="0.01">
           <select id="fType"><option value="expense">הוצאה</option><option value="income">הכנסה</option></select>
         </div>
@@ -316,49 +311,6 @@ async function loadTx() {
   transactions.sort((a, b) => b.date.localeCompare(a.date));
 }
 
-const GEMINI_KEY = localStorage.getItem('gemini_key') || '';
-
-window.scanReceipt = async (input) => {
-  const file = input.files[0];
-  if (!file) return;
-  const status = document.getElementById('receiptStatus');
-  status.style.display = 'block';
-  status.textContent = '⏳ מנתח קבלה...';
-  try {
-    const base64 = await new Promise(res => {
-      const r = new FileReader();
-      r.onload = e => res(e.target.result.split(',')[1]);
-      r.readAsDataURL(file);
-    });
-    if (!GEMINI_KEY) {
-      const k = prompt('הכנס Gemini API Key:');
-      if (!k) { status.textContent = '❌ נדרש API Key'; return; }
-      localStorage.setItem('gemini_key', k);
-      location.reload();
-      return;
-    }
-    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [
-        { text: 'זוהי קבלה/חשבונית. חלץ ממנה: סכום כולל (מספר בלבד), תאריך (פורמט YYYY-MM-DD), שם העסק/תיאור קצר. ענה בפורמט JSON בלבד: {"amount": 0, "date": "YYYY-MM-DD", "note": "שם"}' },
-        { inline_data: { mime_type: file.type, data: base64 } }
-      ]}]})
-    });
-    const data = await resp.json();
-    const text = data.candidates[0].content.parts[0].text;
-    const json = JSON.parse(text.replace(/```json|```/g,'').trim());
-    if (json.amount) document.getElementById('fAmount').value = json.amount;
-    if (json.date)   document.getElementById('fDate').value   = json.date;
-    if (json.note)   document.getElementById('fNote').value   = json.note;
-    status.textContent = '✅ מולא אוטומטית — בדוק ואשר';
-    status.style.color = '#51cf66';
-  } catch(e) {
-    status.textContent = '❌ לא הצלחתי לקרוא — מלא ידנית';
-    status.style.color = '#ff6b6b';
-  }
-  input.value = '';
-};
 
 window.addTx = async () => {
   const amount = parseFloat(document.getElementById('fAmount').value);
