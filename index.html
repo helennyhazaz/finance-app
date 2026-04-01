@@ -316,7 +316,7 @@ async function loadTx() {
   transactions.sort((a, b) => b.date.localeCompare(a.date));
 }
 
-const GEMINI_KEY = 'AIzaSyDNsyBNOYidNZxuiFZn1yj4FjVP5lFog4Q';
+const GEMINI_KEY = localStorage.getItem('gemini_key') || '';
 
 window.scanReceipt = async (input) => {
   const file = input.files[0];
@@ -330,6 +330,13 @@ window.scanReceipt = async (input) => {
       r.onload = e => res(e.target.result.split(',')[1]);
       r.readAsDataURL(file);
     });
+    if (!GEMINI_KEY) {
+      const k = prompt('הכנס Gemini API Key:');
+      if (!k) { status.textContent = '❌ נדרש API Key'; return; }
+      localStorage.setItem('gemini_key', k);
+      location.reload();
+      return;
+    }
     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
